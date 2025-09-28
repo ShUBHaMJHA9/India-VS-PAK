@@ -77,6 +77,12 @@
             color: #ff3366;
         }
 
+        button:disabled {
+            color: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .progress-container {
             width: 100%;
             height: 6px;
@@ -653,39 +659,92 @@
                 }, 3000);
             }
 
-            // Fullscreen handling
-            function enterFullscreen() {
+            // Check if fullscreen is supported
+            function isFullscreenSupported() {
                 const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
                 const element = isMobile ? elements.videoPlayer : elements.videoContainer;
 
+                // Check for iframe restrictions
+                if (window.self !== window.top) {
+                    try {
+                        const iframe = window.frameElement;
+                        if (iframe && !iframe.hasAttribute('allowfullscreen') && !iframe.hasAttribute('webkitallowfullscreen')) {
+                            return { supported: false, message: 'Fullscreen blocked: iframe missing allowfullscreen attribute.' };
+                        }
+                    } catch (e) {
+                        return { supported: false, message: 'Fullscreen blocked: Unable to access iframe properties.' };
+                    }
+                }
+
+                // Check browser support
                 if (isMobile && elements.videoPlayer.webkitEnterFullscreen) {
-                    elements.videoPlayer.webkitEnterFullscreen().catch(err => showError('Fullscreen request failed: ' + err.message));
-                } else if (element.requestFullscreen) {
-                    element.requestFullscreen().catch(err => showError('Fullscreen request failed: ' + err.message));
-                } else if (element.mozRequestFullScreen) {
-                    element.mozRequestFullScreen();
-                } else if (element.webkitRequestFullscreen) {
-                    element.webkitRequestFullscreen();
-                } else if (element.msRequestFullscreen) {
-                    element.msRequestFullscreen();
-                } else {
-                    showError('Fullscreen is not supported in this browser');
+                    return { supported: true };
+                } else if (
+                    element.requestFullscreen ||
+                    element.mozRequestFullScreen ||
+                    element.webkitRequestFullscreen ||
+                    element.msRequestFullscreen
+                ) {
+                    return { supported: true };
+                }
+
+                return { supported: false, message: 'Fullscreen is not supported in this browser.' };
+            }
+
+            // Initialize fullscreen button state
+            function initializeFullscreenButton() {
+                const support = isFullscreenSupported();
+                if (!support.supported) {
+                    elements.fullscreenBtn.disabled = true;
+                    elements.fullscreenBtn.title = support.message || 'Fullscreen not available';
+                    showError(support.message || 'Fullscreen not supported on this device.');
                 }
             }
 
-            function exitFullscreen() {
-                if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen().catch(err => showError('Exit fullscreen failed: ' + err.message));
-                    } else if (document.mozCancelFullScreen) {
-                        document.mozCancelFullScreen();
-                    } else if (document.webkitExitFullscreen) {
-                        document.webkitExitFullscreen();
-                    } else if (document.msExitFullscreen) {
-                        document.msExitFullscreen();
+            // Fullscreen handling
+            async function enterFullscreen() {
+                const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+                const element = elements.videoPlayer; // Always use videoPlayer for mobile
+
+                try {
+                    if (isMobile && elements.videoPlayer.webkitEnterFullscreen) {
+                        elements.videoPlayer.webkitEnterFullscreen();
+                    } else if (element.requestFullscreen) {
+                        await element.requestFullscreen();
+                    } else if (element.mozRequestFullScreen) {
+                        element.mozRequestFullScreen();
+                    } else if (element.webkitRequestFullscreen) {
+                        element.webkitRequestFullscreen();
+                    } else if (element.msRequestFullscreen) {
+                        element.msRequestFullscreen();
+                    } else {
+                        showError('Fullscreen is not supported in this browser.');
                     }
-                } else if (elements.videoPlayer.webkitDisplayingFullscreen) {
-                    elements.videoPlayer.webkitExitFullscreen();
+                } catch (err) {
+                    showError('Fullscreen request failed: ' + err.message);
+                    if (err.message.includes('permissions policy')) {
+                        showError('Fullscreen blocked by permissions policy. If in an iframe, ensure allowfullscreen is set.');
+                    }
+                }
+            }
+
+            async function exitFullscreen() {
+                try {
+                    if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+                        if (document.exitFullscreen) {
+                            await document.exitFullscreen();
+                        } else if (document.mozCancelFullScreen) {
+                            document.mozCancelFullScreen();
+                        } else if (document.webkitExitFullscreen) {
+                            document.webkitExitFullscreen();
+                        } else if (document.msExitFullscreen) {
+                            document.msExitFullscreen();
+                        }
+                    } else if (elements.videoPlayer.webkitDisplayingFullscreen) {
+                        elements.videoPlayer.webkitExitFullscreen();
+                    }
+                } catch (err) {
+                    showError('Exit fullscreen failed: ' + err.message);
                 }
             }
 
@@ -732,11 +791,11 @@
                 showControlsTemporarily();
             });
 
-            elements.fullscreenBtn.addEventListener('click', () => {
+            elements.fullscreenBtn.addEventListener('click', async () => {
                 if (!isFullscreen) {
-                    enterFullscreen();
+                    await enterFullscreen();
                 } else {
-                    exitFullscreen();
+                    await exitFullscreen();
                 }
                 showControlsTemporarily();
             });
@@ -830,6 +889,7 @@
             handleOrientation();
             simulateViewCount();
             showWelcomeNotification();
+            initializeFullscreenButton();
         });
     </script>
 </body>
