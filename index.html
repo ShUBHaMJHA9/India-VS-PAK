@@ -293,11 +293,70 @@
             display: none;
             flex-direction: column;
             align-items: center;
+            animation: slideIn 0.5s ease-out;
         }
 
         .rotate-prompt i {
             font-size: 2rem;
             margin-bottom: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 6;
+            background: linear-gradient(135deg, #ff3366, #ff5588);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            color: white;
+            font-size: 1.1rem;
+            max-width: 90%;
+            animation: slideIn 0.5s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification a {
+            color: #fff;
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
+        .notification a:hover {
+            color: #ffd700;
+        }
+
+        .notification button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .notification button:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: none;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translate(-50%, -60%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, -50%);
+                opacity: 1;
+            }
         }
 
         @keyframes spin {
@@ -306,44 +365,32 @@
 
         @media (max-width: 768px) {
             .control-buttons {
-                gap: 10px;
+                gap: 8px;
+                flex-wrap: wrap;
             }
 
             button, .volume-button, .server-button {
-                font-size: 1.2rem;
-                padding: 6px;
+                font-size: 1.1rem;
+                padding: 5px;
             }
 
             .volume-control {
-                max-width: 120px;
+                max-width: 100px;
             }
 
             .server-dropdown {
-                min-width: 120px;
-                bottom: 40px;
+                min-width: 100px;
+                bottom: 35px;
             }
 
             .server-option {
-                font-size: 0.8rem;
-                padding: 8px 12px;
+                font-size: 0.7rem;
+                padding: 6px 10px;
             }
 
-            @media (orientation: portrait) {
-                .rotate-prompt {
-                    display: flex;
-                }
-                #videoPlayer, .controls-overlay, .status-bar {
-                    display: none;
-                }
-            }
-
-            @media (orientation: landscape) {
-                .rotate-prompt {
-                    display: none;
-                }
-                #videoPlayer, .controls-overlay, .status-bar {
-                    display: block;
-                }
+            .notification {
+                font-size: 0.9rem;
+                padding: 15px 20px;
             }
         }
     </style>
@@ -401,7 +448,13 @@
 
     <div class="rotate-prompt" id="rotatePrompt">
         <i class="fas fa-mobile-alt"></i>
-        Please rotate your device to landscape mode
+        For best experience, rotate your device to landscape mode
+    </div>
+
+    <div class="notification" id="welcomeNotification">
+        <span>Made by Shubham Kumar Jha</span>
+        <a href="https://t.me/shubh97j" target="_blank">Contact on Telegram: t.me/shubh97j</a>
+        <button id="closeNotification">Close</button>
     </div>
 
     <div class="credit">Made by Shubham</div>
@@ -437,7 +490,9 @@
                 errorMessage: document.getElementById('errorMessage'),
                 errorText: document.getElementById('errorText'),
                 rotatePrompt: document.getElementById('rotatePrompt'),
-                viewCount: document.getElementById('viewCount')
+                viewCount: document.getElementById('viewCount'),
+                welcomeNotification: document.getElementById('welcomeNotification'),
+                closeNotification: document.getElementById('closeNotification')
             };
 
             let hls = null;
@@ -480,7 +535,6 @@
                 elements.errorMessage.style.display = 'none';
                 retryCount = 0;
 
-                // Set timeout to prevent infinite loading
                 loadingTimeout = setTimeout(() => {
                     if (!elements.loadingIndicator.classList.contains('hidden')) {
                         showError('Loading timeout. Please try another server.');
@@ -558,7 +612,6 @@
                     hideLoading();
                 }, { once: true });
 
-                // Ensure loading indicator is hidden when video can play
                 elements.videoPlayer.addEventListener('canplay', hideLoading, { once: true });
             }
 
@@ -603,18 +656,42 @@
             // Fullscreen handling
             function enterFullscreen() {
                 const container = elements.videoContainer;
-                if (container.requestFullscreen) container.requestFullscreen();
-                else if (container.mozRequestFullScreen) container.mozRequestFullScreen();
-                else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
-                else if (container.msRequestFullscreen) container.msRequestFullscreen();
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.mozRequestFullScreen) {
+                    container.mozRequestFullScreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                } else if (elements.videoPlayer.webkitEnterFullscreen) {
+                    elements.videoPlayer.webkitEnterFullscreen(); // iOS support
+                }
             }
 
             function exitFullscreen() {
-                if (document.exitFullscreen) document.exitFullscreen();
-                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-                else if (document.msExitFullscreen) document.msExitFullscreen();
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
             }
+
+            // Notification handling
+            function showWelcomeNotification() {
+                elements.welcomeNotification.style.display = 'flex';
+                setTimeout(() => {
+                    elements.welcomeNotification.style.display = 'none';
+                }, 5000);
+            }
+
+            elements.closeNotification.addEventListener('click', () => {
+                elements.welcomeNotification.style.display = 'none';
+            });
 
             // Event listeners
             elements.playPauseBtn.addEventListener('click', () => {
@@ -641,8 +718,11 @@
             });
 
             elements.fullscreenBtn.addEventListener('click', () => {
-                if (!isFullscreen) enterFullscreen();
-                else exitFullscreen();
+                if (!isFullscreen) {
+                    enterFullscreen();
+                } else {
+                    exitFullscreen();
+                }
                 showControlsTemporarily();
             });
 
@@ -698,20 +778,23 @@
             });
 
             document.addEventListener('fullscreenchange', () => {
-                isFullscreen = !!document.fullscreenElement;
+                isFullscreen = !!document.fullscreenElement || !!document.webkitFullscreenElement;
+                updateIcons();
+            });
+            document.addEventListener('webkitfullscreenchange', () => {
+                isFullscreen = !!document.fullscreenElement || !!document.webkitFullscreenElement;
                 updateIcons();
             });
 
             // Orientation handling
             function handleOrientation() {
-                if (window.matchMedia("(orientation: portrait)").matches && window.innerWidth <= 768) {
-                    elements.videoPlayer.pause();
+                if (window.matchMedia("(max-width: 768px)").matches) {
                     elements.rotatePrompt.style.display = 'flex';
+                    setTimeout(() => {
+                        elements.rotatePrompt.style.display = 'none';
+                    }, 5000);
                 } else {
                     elements.rotatePrompt.style.display = 'none';
-                    if (elements.videoPlayer.paused && !elements.controlsOverlay.classList.contains('hidden')) {
-                        elements.videoPlayer.play();
-                    }
                 }
             }
 
@@ -722,12 +805,7 @@
             initVideoPlayer(VIDEO_SERVERS[0].url);
             handleOrientation();
             simulateViewCount();
-
-            // Auto fullscreen on first click
-            document.addEventListener('click', () => {
-                enterFullscreen();
-                elements.videoPlayer.play();
-            }, { once: true });
+            showWelcomeNotification();
         });
     </script>
 </body>
