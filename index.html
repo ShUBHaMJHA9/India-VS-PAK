@@ -43,7 +43,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
             padding: 15px 20px;
             z-index: 2;
             transition: opacity 0.3s ease;
@@ -70,6 +70,7 @@
             cursor: pointer;
             transition: transform 0.2s, color 0.2s;
             padding: 8px;
+            position: relative;
         }
 
         button:hover {
@@ -89,14 +90,14 @@
 
         .progress-bar {
             height: 100%;
-            background: #ff3366;
+            background: linear-gradient(to right, #ff3366, #ff5588);
             border-radius: 3px;
             width: 0;
             transition: width 0.1s;
         }
 
         .progress-container:hover .progress-bar {
-            background: #ff5588;
+            background: linear-gradient(to right, #ff5588, #ff7799);
         }
 
         .time-display {
@@ -112,15 +113,14 @@
             top: 0;
             left: 0;
             width: 100%;
-            padding: 8px;
+            padding: 8px 20px;
             background: rgba(0, 0, 0, 0.8);
             z-index: 3;
             font-size: 0.9rem;
-            text-align: center;
-            transition: opacity 0.3s;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: opacity 0.3s;
         }
 
         .status-bar.hidden {
@@ -130,20 +130,6 @@
         .view-count {
             font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.7);
-        }
-
-        .server-select {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-
-        .server-select:focus {
-            outline: none;
         }
 
         .credit {
@@ -160,34 +146,104 @@
             align-items: center;
             gap: 10px;
             margin-top: 10px;
-            max-width: 150px;
+            max-width: 200px;
+            position: relative;
+        }
+
+        .volume-button {
+            font-size: 1.4rem;
+            padding: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            transition: background 0.2s, transform 0.2s, color 0.2s;
+        }
+
+        .volume-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+            color: #ff3366;
         }
 
         .volume-slider {
             width: 100%;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 2.5px;
+            height: 6px;
+            background: linear-gradient(to right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.5));
+            border-radius: 3px;
             outline: none;
             -webkit-appearance: none;
             cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .volume-slider:hover {
+            background: linear-gradient(to right, #ff3366, #ff5588);
         }
 
         .volume-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: #ff3366;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             cursor: pointer;
         }
 
         .volume-slider::-moz-range-thumb {
-            width: 12px;
-            height: 12px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: #ff3366;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             cursor: pointer;
+        }
+
+        .server-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .server-button {
+            font-size: 1.4rem;
+            padding: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            transition: background 0.2s, transform 0.2s, color 0.2s;
+        }
+
+        .server-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+            color: #ff3366;
+        }
+
+        .server-dropdown {
+            display: none;
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 3;
+            min-width: 150px;
+        }
+
+        .server-dropdown.show {
+            display: block;
+        }
+
+        .server-option {
+            padding: 10px 15px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .server-option:hover {
+            background: rgba(255, 51, 102, 0.7);
         }
 
         .loading {
@@ -241,13 +297,23 @@
                 gap: 10px;
             }
 
-            button {
+            button, .volume-button, .server-button {
                 font-size: 1.2rem;
                 padding: 6px;
             }
 
             .volume-control {
-                max-width: 100px;
+                max-width: 120px;
+            }
+
+            .server-dropdown {
+                min-width: 120px;
+                bottom: 40px;
+            }
+
+            .server-option {
+                font-size: 0.8rem;
+                padding: 8px 12px;
             }
 
             /* Portrait mode */
@@ -298,19 +364,20 @@
             <button id="skipBack" title="Skip Backward 10s"><i class="fas fa-backward"></i></button>
             <button id="playPause" title="Play/Pause"><i class="fas fa-play"></i></button>
             <button id="skipForward" title="Skip Forward 10s"><i class="fas fa-forward"></i></button>
-            <button id="muteUnmute" title="Mute/Unmute"><i class="fas fa-volume-up"></i></button>
+            <button id="muteUnmute" class="volume-button" title="Mute/Unmute"><i class="fas fa-volume-up"></i></button>
             <button id="fullscreen" title="Toggle Fullscreen"><i class="fas fa-expand"></i></button>
-            <select id="serverSelect" class="server-select">
-                <option value="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8">Server 1 (HLS)</option>
-                <option value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">Server 2 (MP4)</option>
-                <option value="https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8">Server 3 (HLS)</option>
-            </select>
+            <div class="server-container">
+                <button id="serverButton" class="server-button" title="Select Server"><i class="fas fa-server"></i></button>
+                <div id="serverDropdown" class="server-dropdown">
+                    <div class="server-option" data-url="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8">Server 1 (HLS)</div>
+                    <div class="server-option" data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">Server 2 (MP4)</div>
+                    <div class="server-option" data-url="https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8">Server 3 (HLS)</div>
+                </div>
+            </div>
         </div>
 
         <div class="volume-control">
-            <i class="fas fa-volume-down"></i>
-            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.1" value="1">
-            <i class="fas fa-volume-up"></i>
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="1">
         </div>
     </div>
 
@@ -341,7 +408,9 @@
             const skipForwardBtn = document.getElementById('skipForward');
             const fullscreenBtn = document.getElementById('fullscreen');
             const volumeSlider = document.getElementById('volumeSlider');
-            const serverSelect = document.getElementById('serverSelect');
+            const serverButton = document.getElementById('serverButton');
+            const serverDropdown = document.getElementById('serverDropdown');
+            const serverOptions = document.querySelectorAll('.server-option');
             const progressBar = document.getElementById('progressBar');
             const progressContainer = document.getElementById('progressContainer');
             const currentTimeDisplay = document.getElementById('currentTime');
@@ -496,9 +565,25 @@
                 showControlsTemporarily();
             });
 
-            serverSelect.addEventListener('change', function() {
-                initVideoPlayer(serverSelect.value);
+            // Server dropdown handling
+            serverButton.addEventListener('click', function() {
+                serverDropdown.classList.toggle('show');
                 showControlsTemporarily();
+            });
+
+            serverOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    initVideoPlayer(this.getAttribute('data-url'));
+                    serverDropdown.classList.remove('show');
+                    showControlsTemporarily();
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!serverButton.contains(e.target) && !serverDropdown.contains(e.target)) {
+                    serverDropdown.classList.remove('show');
+                }
             });
 
             // Seek when clicking on progress bar
@@ -519,6 +604,7 @@
                     if (!videoPlayer.paused) {
                         controlsOverlay.classList.add('hidden');
                         statusBar.classList.add('hidden');
+                        serverDropdown.classList.remove('show');
                     }
                 }, 3000);
             }
@@ -530,6 +616,7 @@
                 } else {
                     controlsOverlay.classList.add('hidden');
                     statusBar.classList.add('hidden');
+                    serverDropdown.classList.remove('show');
                 }
             });
 
